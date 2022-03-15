@@ -57,28 +57,31 @@ if re.status_code == 200:
 
         soup = bs4.BeautifulSoup(current_req.text, "html.parser")
         all_book_items = soup.find_all("div", {"class":"book-item"})
-        for book_item in all_book_items:
-            book_info = book_item.select_one(".item-info")
+        try:
+            for book_item in all_book_items:
+                book_info = book_item.select_one(".item-info")
 
-            book_name = book_info.select_one(".title")
-            book_url = BASE_URL + book_name.find("a")['href']
-            book_name = book_name.text.strip()
+                book_name = book_info.select_one(".title")
+                book_url = BASE_URL + book_name.find("a")['href']
+                book_name = book_name.text.strip()
 
-            book_author = book_info.select_one(".author")
-            book_author = book_author.text.strip()
+                book_author = book_info.select_one(".author")
+                book_author = book_author.text.strip()
 
-            complete_book_name = f"{book_name} - {book_author}"
+                complete_book_name = f"{book_name} - {book_author}"
 
-            book_price = book_info.select_one(".price")
-            # encoding and decoding removes weird unicode artifacts
-            book_price = book_price.text.encode("ascii", "ignore").decode() 
-            book_price = book_price.strip().replace(' ', '')
-            book_price = book_price.replace(args.currency, '')
-            book_price = book_price.split('\n')[0]
-            book_price = locale.atof(book_price)
+                book_price = book_info.select_one(".price")
+                # encoding and decoding removes weird unicode artifacts
+                book_price = book_price.text.encode("ascii", "ignore").decode() 
+                book_price = book_price.strip().replace(' ', '')
+                book_price = book_price.replace(args.currency, '')
+                book_price = book_price.split('\n')[0]
+                book_price = locale.atof(book_price)
 
-            book = BookItem(complete_book_name, book_url, book_price)
-            all_books.append(book)
+                book = BookItem(complete_book_name, book_url, book_price)
+                all_books.append(book)
+        except:
+            continue
 
 all_books.sort(key=BookItem.GetPrice)
 for book in all_books:
