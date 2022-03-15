@@ -20,37 +20,41 @@ class BookItem():
         return self.__str__()
 
 parser = argparse.ArgumentParser(description="Crawls Book Depository and sorts by price")
-parser.add_argument("url", metavar="url", type=str, help="Enter the category url")
+parser.add_argument("search", metavar="search", type=str, help="""Enter the search you wanna make between" """)
 parser.add_argument("-locale", metavar="locale", type=str, default="en", help="Enter 'es' if your decimal separator is ','. Default is 'en', where decimal separator is '.'")
 parser.add_argument("-currency", metavar="currency", type=str, default="US$", help="Enter the currency that appears by default in BookDepository, default is 'US$'")
 parser.add_argument("-pages", metavar="pages", type=int, default=10, help="Enter the amount of pages you want to search through")
 
 args = parser.parse_args()
-args.url += "?availability=1&searchSortBy=price_low_high"
 
 locale.setlocale(locale.LC_ALL, args.locale)
 locale_data = locale.localeconv()
 decimal_pt = locale_data["mon_decimal_point"]
 thousand_pt = locale_data["mon_thousands_sep"]
 
+search_term = args.search.replace('"', '')
+url = f"https://www.bookdepository.com/search?searchTerm={search_term}&search=Find+book"
+
 BASE_URL = "https://www.bookdepository.com"
 ITEMS_PER_PAGE = 30
 MAX_PAGES = 333
 
 all_books = []
-re = requests.get(args.url)
+re = requests.get(url)
 if re.status_code == 200:
     soup = bs4.BeautifulSoup(re.text, "html.parser")
 
     search_count = soup.find("span", {"class":"search-count"})
     search_count = search_count.text.replace('.', '')
+    search_count = search_count.replace(',', '')
     search_count = int(search_count)
     total_pages = ceil(search_count / ITEMS_PER_PAGE)
     total_pages = min(min(args.pages, total_pages), MAX_PAGES)
 
     for i in range(total_pages):
-        current_url = args.url + f"&page={i+1}"
+        current_url = url + f"&page={i+1}"
         current_req = requests.get(current_url)
+        print(f"Searching page {i+1}/{total_pages}...")
 
         if re.status_code != 200:
             continue
